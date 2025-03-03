@@ -22,7 +22,26 @@ services:
       - PARSING_SERVICE_PORT=${PARSING_SERVICE_PORT}
     volumes:
       - ./backend:/app
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
 
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+volumes:
+  grafana-storage:
   # parsing:
   #   build: ./parsing
   #   container_name: python-parsing
