@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func InitLog() *os.File {
+func InitLogFile() *os.File {
 	f, err := os.OpenFile("go-backend.log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 	if err != nil {
 		log.Panic(err)

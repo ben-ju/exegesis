@@ -16,10 +16,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// Initializing with file but might use grafana & prometheus
-	logFile := utils.InitLog()
+	logFile := utils.InitLogFile()
 	defer logFile.Close()
 
-	logMiddleware := middleware.Logging()
-	http.HandleFunc("/", logMiddleware(handler))
+	h := middleware.SetMiddlewares(handler, middleware.Logging())
+	http.HandleFunc("/", h)
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("APP_PORT"), nil))
 }
