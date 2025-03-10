@@ -26,16 +26,17 @@ func InitDB() *sql.DB {
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatalf("Error while initializing database : %v", err)
+		// log.Fatalf("Error while initializing database : %v", err)
+        log.Print("No database connection but we kept running")
 	}
-
-	db.SetMaxOpenConns(MAX_CONNECTIONS)
-	db.SetMaxIdleConns(MAX_IDLE_CONNECTIONS)
-	db.SetConnMaxLifetime(MAX_CONNECTION_TIME)
-
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Error while trying to ping the database : %v", err)
-	}
-	log.Println("[INFO] CONNECTED TO DATABASE")
+	//
+	// db.SetMaxOpenConns(MAX_CONNECTIONS)
+	// db.SetMaxIdleConns(MAX_IDLE_CONNECTIONS)
+	// db.SetConnMaxLifetime(MAX_CONNECTION_TIME)
+	//
+	// if err := db.Ping(); err != nil {
+	// 	log.Fatalf("Error while trying to ping the database : %v", err)
+	// }
+	// log.Println("[INFO] CONNECTED TO DATABASE")
 	return db
 }

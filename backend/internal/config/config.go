@@ -14,8 +14,8 @@ type Config struct {
 	AppKey     string
 }
 
-func NewConfig() *Config {
-	return &Config{
+func NewConfig() Config {
+	return Config{
 		AppURL:     os.Getenv("APP_URL"),
 		AppPort:    os.Getenv("APP_PORT"),
 		PsqlHost:   os.Getenv("POSTGRES_HOST"),
