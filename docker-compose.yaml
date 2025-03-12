@@ -16,6 +16,20 @@ services:
     volumes:
       - ./backend:/app
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./docker/Dockerfile
+      target: ${FRONTEND_TARGET:-development} # Use 'development' by default, 'production' for prod
+    container_name: vue-frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:${FRONTEND_PORT:-5173}" # Use 5173 for dev, 80 for prod
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app # For development hot-reloading
+      - /app/node_modules # Prevents overwriting of node_modules
+
   postgres:
     image: postgres:14
     container_name: postgres-db
