@@ -2,8 +2,9 @@ package main
 
 import (
 	"log"
-	"net/http"
 
+	"github.com/ben-ju/exegesis/internal/middleware"
+	"github.com/ben-ju/exegesis/internal/router"
 	"github.com/ben-ju/exegesis/internal/users"
 )
 
@@ -13,8 +14,10 @@ func main() {
 	app := mount()
 	defer app.logger.File.Close()
 
-	userRouter := http.NewServeMux()
-	users.RegisterRoutes(userRouter)
+	userRouter := router.NewRouter()
+
+	userRouter.Use(middleware.Test, middleware.SecondTest)
+	userRouter.Register(&users.UserRoutable{})
 
 	app.rootMux.Handle("/", userRouter)
 

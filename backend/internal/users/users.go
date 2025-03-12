@@ -2,17 +2,21 @@ package users
 
 import (
 	"net/http"
+
+	"github.com/ben-ju/exegesis/internal/router"
 )
 
-func RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/", usersHome)
-	mux.HandleFunc("/test", test)
+type UserRoutable struct{}
+
+func (ur *UserRoutable) RegisterRoutes(r *router.Router) {
+	r.HandleFunc("/", ur.usersHome)
+	r.HandleFunc("/test", ur.test)
 }
 
-func usersHome(w http.ResponseWriter, r *http.Request) {
+func (ur *UserRoutable) usersHome(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("User homepage"))
 }
 
-func test(w http.ResponseWriter, r *http.Request) {
+func (ur *UserRoutable) test(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Testing"))
 }

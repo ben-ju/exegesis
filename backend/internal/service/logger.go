@@ -21,6 +21,7 @@ func NewLogger() *Logger {
 
 	multiWriter := io.MultiWriter(os.Stdout, file)
 	instance := log.New(multiWriter, "APP_LOG: ", log.Ldate|log.Ltime|log.Lshortfile)
+	log.SetOutput(instance.Writer())
 	return &Logger{
 		Instance: instance,
 		File:     file,

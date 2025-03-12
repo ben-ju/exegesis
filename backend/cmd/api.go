@@ -9,6 +9,7 @@ import (
 	"github.com/ben-ju/exegesis/internal/service"
 )
 
+// The logger is not useful for now since we're overriding the default log output
 type app struct {
 	db      *sql.DB
 	server  *http.Server
@@ -34,6 +35,7 @@ func mount() *app {
 		Handler:        rootMux,
 		MaxHeaderBytes: 1 << 20,
 	}
+    // Might change it to something else later on
 	logger := service.NewLogger()
 	app := &app{
 		db:      db,
