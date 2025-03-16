@@ -19,8 +19,8 @@ type app struct {
 }
 
 func mount() *app {
-	db := service.InitDB()
 	config := config.NewConfig()
+	db := initDb(config)
 	port := config.AppPort
 	if port == "" {
 		port = "8080"
@@ -35,7 +35,7 @@ func mount() *app {
 		Handler:        rootMux,
 		MaxHeaderBytes: 1 << 20,
 	}
-    // Might change it to something else later on
+	// Might change it to something else later on
 	logger := service.NewLogger()
 	app := &app{
 		db:      db,
