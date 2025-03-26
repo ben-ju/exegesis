@@ -18,9 +18,13 @@ type app struct {
 	config  config.Config
 }
 
-func mount() *app {
+func mount() (*app, error) {
 	config := config.NewConfig()
-	db := initDb(config)
+	db, err := initDb(config)
+	if err != nil {
+		return nil, err
+	}
+
 	port := config.AppPort
 	if port == "" {
 		port = "8080"
@@ -44,7 +48,7 @@ func mount() *app {
 		rootMux: rootMux,
 		config:  config,
 	}
-	return app
+	return app, nil
 }
 
 func (a *app) run() error {

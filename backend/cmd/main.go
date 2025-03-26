@@ -16,7 +16,10 @@ func main() {
 	if err := godotenv.Load(".env"); err != nil {
 		log.Fatalf("Erreur lors du chargement du fichier .env : %v", err)
 	}
-	app := mount()
+	app, err := mount()
+	if err != nil {
+		log.Fatalf("FATAL ERROR : %v", err)
+	}
 	defer app.logger.File.Close()
 	defer app.db.Close()
 

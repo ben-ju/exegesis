@@ -1,22 +1,20 @@
 import os
 import re
-from typing import Optional
 import psycopg2
-
-# from database import add_verses
-from enums.books import BOOKS_FR
-from ebooklib import epub
-from bs4 import BeautifulSoup
-from dotenv import load_dotenv
 import warnings
 
+from typing import Optional
+from enums.books import BOOKS_FR
+from ebooklib import epub
+from dotenv import load_dotenv
 from tests.books_coverage import test_book_coverage
+
+
+
 # Ignorer les UserWarnings spécifiques d'ebooklib
 warnings.filterwarnings("ignore", category=UserWarning, module="ebooklib.epub")
-
 # Ignorer les FutureWarnings spécifiques d'ebooklib
 warnings.filterwarnings("ignore", category=FutureWarning, module="ebooklib.epub")
-
 # Ignorer les warnings XML/HTML de BeautifulSoup
 warnings.filterwarnings("ignore", category=UserWarning, module="html.parser")
 
@@ -24,9 +22,22 @@ warnings.filterwarnings("ignore", category=UserWarning, module="html.parser")
 dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
 load_dotenv(dotenv_path)
 
+
+# TODO : ADD ENV FOR PARSERS
+RESOURCES_PATH = os.getenv("RESOURCES_PATH")
+
 books_pattern = "|".join(re.escape(book) for book in BOOKS_FR)
 header_re = re.compile(r"^(?P<book>" + books_pattern + r")\s*(?P<chapter>\d+)?\s*$")
 verse_re = re.compile(r"^(\d+)$")
+# Create the flattened directory inside the resources folder containing already flattened resources
+def create_flattened_dir():
+    # Get paths from environment variable
+    resources_path = "resources/"
+    # Create flattened directory
+    base_dir = os.path.dirname(resources_path)
+    flatten_dir = os.path.join(base_dir, "flattened")
+    os.makedirs(flatten_dir, exist_ok=True)
+
 def get_db_connection():
     return psycopg2.connect(
         host=os.getenv("POSTGRES_HOST"),
@@ -48,45 +59,6 @@ def parse_epub_metadata(book: epub.EpubBook) -> dict:
 def safe_filename(title: str) -> str:
     """Sanitize filename by removing invalid characters"""
     return re.sub(r'[\\/*?:"<>|]', "", title).strip().replace(" ", "_")
-def flatten_text_sections(book, metadata):
-    print("flattening")
-    """
-    Lit un fichier EPUB et crée un unique fichier texte
-    contenant le contenu brut de tous les documents dans l'ordre de lecture,
-    SANS balises HTML (uniquement le texte).
-    """
-    # Get paths from environment variable
-    resources_path = "resources/"
-    # Create flattened directory
-    base_dir = os.path.dirname(resources_path)
-    flatten_dir = os.path.join(base_dir, "flattened")
-    os.makedirs(flatten_dir, exist_ok=True)
-
-    # Create output filename
-    original_filename = os.path.basename(resources_path)
-    output_path = os.path.join(flatten_dir, f"{metadata["title"]}_flatten.txt")
-
-    # Process book content
-    all_text_parts = []
-    for itemref in book.spine:
-        item_id = itemref[0]
-        item = book.get_item_with_id(item_id)
-
-        if item and item.get_name():
-            try:
-                html_content = item.get_content().decode("utf-8", errors="ignore")
-                soup = BeautifulSoup(html_content, "html.parser")
-                text_content = soup.get_text(separator="\n")
-                all_text_parts.append(text_content.strip())
-            except Exception as e:
-                print(f"Error processing {item.get_name()}: {str(e)}")
-
-    # Write output file
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write("\n\n".join(all_text_parts))
-
-    return output_path
-
 
 def parse(flattened_book_path):
     """
@@ -146,19 +118,48 @@ def open_epub(epub_path) -> Optional[epub.EpubBook] | Exception:
         return e
 
 
-def main(book_path):
+def main():
     try:
-        book = open_epub(book_path)
-        if not book:
-            return
-        metadata = parse_epub_metadata(book)
-        flattened_path = flatten_text_sections(book, metadata)
-        verses = parse(flattened_path)
-        test_book_coverage(verses)
+        create_flattened_dir()
+
+        filesRessources = os.listdir("resources")
+        resources =  [k for k in filesRessources if 'flattened' not in k]
+        print("----- AVAILABLE RESSOURCES -----\n")
+        print("----------------\n")
+
+        for idx, resource in enumerate(resources):
+            print(f"[{idx}] -> {resource}")
+        try:
+            resourceIndex = int(input("Select the resource number that you would like to parse\n >>> "))
+            print(resources[resourceIndex])
+
+        except Exception as e:
+            print("error in user input")
+            print(e)
+
+        parsers = os.listdir("parsers")
+        print("----- AVAILABLE PARSERS -----\n")
+        print("----------------\n")
+
+        for idx, parser in enumerate(parsers):
+            print(f"[{idx}] -> {parser}")
+        try:
+            parserIndex = int(input("Select the resource number that you would like to parse\n >>> "))
+            print(parsers[parserIndex])
+        except Exception as e:
+            print("error in user input")
+            print(e)
+        # book = open_epub(book_path)
+        # if not book:
+        #     return
+        # metadata = parse_epub_metadata(book)
+        # flattened_path = flatten_text_sections(book, metadata)
+        # verses = parse(flattened_path)
+        # test_book_coverage(verses)
     except Exception as e:
         print(e)
 
 
 if __name__ == "__main__":
-    main("./resources/lsg.epub")
+    main()
 
