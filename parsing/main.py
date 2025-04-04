@@ -18,12 +18,10 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="ebooklib.epub"
 # Ignorer les warnings XML/HTML de BeautifulSoup
 warnings.filterwarnings("ignore", category=UserWarning, module="html.parser")
 
-# Load environment variables from the parent directory
 dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
 load_dotenv(dotenv_path)
 
 
-# TODO : ADD ENV FOR PARSERS
 RESOURCES_PATH = os.getenv("RESOURCES_PATH") or "resources/"
 FLATTENED_PATH=os.getenv("FLATTENED_PATH") or "resources/flattened/"
 PARSERS_PATH=os.getenv("PARSER_PATH") or "parsers/"
@@ -32,33 +30,40 @@ books_pattern = "|".join(re.escape(book) for book in BOOKS_FR)
 header_re = re.compile(r"^(?P<book>" + books_pattern + r")\s*(?P<chapter>\d+)?\s*$")
 verse_re = re.compile(r"^(\d+)$")
 
+def parse_epub_metadata(book: epub.EpubBook) -> dict:
+    title = book.get_metadata('DC', 'title')
+    authors = book.get_metadata('DC', 'creator')
+    language = book.get_metadata('DC', 'language')
+    publisher = book.get_metadata('DC', 'publisher')
+    date = book.get_metadata('DC', 'date')
+
+    metadata = {}
+    if title:
+        metadata["title"] = title
+    if authors:
+        metadata["authors"] = authors
+    if language:
+        metadata["language"] = language
+    if publisher:
+        metadata["publisher"] = publisher
+    if date:
+        metadata["date"] = date
+
+    return metadata
+
 def load_parser(parser_filename):
-    """
-    Dynamically load a parser module from its filename.
-    Args:
-        parser_filename (str): The filename of the parser (with .py extension)
-    Returns:
-        module: The imported parser module
-    """
-    # Get the full path to the parser file
     parser_path = os.path.join(PARSERS_PATH, parser_filename)
-    # Extract module name without extension
     module_name = os.path.splitext(parser_filename)[0]
-    # Load the module specification
     spec = importlib.util.spec_from_file_location(module_name, parser_path)
     if spec is None:
         raise ImportError(f"Could not find the parser: {parser_path}")
-    # Create the module and initialize it
     parser_module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = parser_module
     spec.loader.exec_module(parser_module)
     return parser_module
 
-# Create the flattened directory inside the resources folder containing already flattened resources
 def create_flattened_dir():
-    # Get paths from environment variable
     resources_path = "resources/"
-    # Create flattened directory
     base_dir = os.path.dirname(resources_path)
     flatten_dir = os.path.join(base_dir, "flattened")
     os.makedirs(flatten_dir, exist_ok=True)
@@ -121,11 +126,11 @@ def user_parsers_selection() -> str:
     except (FileNotFoundError, ValueError, IndexError):
         raise
 
-def load_selected_parser(parser_filename, book):
+def load_selected_parser(parser_filename, book, metadata):
     parser_module = load_parser(parser_filename)
     # Check if the parser has a parse_epub method
     if hasattr(parser_module, 'parse_epub'):
-        result = parser_module.parse_epub(book)
+        result = parser_module.parse_epub(book, FLATTENED_PATH, metadata)
         print(f"Parsing completed with {parser_filename}")
         print(f"Parsed {len(result) if result else 0} items")
         return result
@@ -138,8 +143,9 @@ def main():
         resource_filename = user_resources_selection()
         parser_filename = user_parsers_selection()
         book = open_epub(os.path.join(RESOURCES_PATH, resource_filename))
+        metadata = parse_epub_metadata(book)
         # we're not doing anything with the result for now
-        result = load_selected_parser(parser_filename, book)
+        result = load_selected_parser(parser_filename, book, metadata)
     except Exception as e:
         print(f"Unexpected error: {e}")
 
